@@ -1,59 +1,54 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using System.Text.Json;
-using System.Net.Http.Headers;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 
-namespace airtimegiveaway
+var httpClient = new HttpClient {BaseAddress = new Uri("https://jsonplaceholder.typicode.com/todos/")};
+var logger = new TodoCustomLogger(httpClient, 1);
+await logger.CustomLogger();
+
+public class Todo
 {
-    class Program
+    [JsonPropertyName("id")] public int Id { get; set; }
+
+    [JsonPropertyName("userId")] public int UserId { get; set; }
+
+    [JsonPropertyName("title")] public string Title { get; set; } = "";
+
+    [JsonPropertyName("completed")] public bool Completed { get; set; }
+}
+
+public class TodoCustomLogger
+{
+    private readonly HttpClient _client;
+
+    public TodoCustomLogger(HttpClient client, int id)
     {
-        static readonly HttpClient client = new HttpClient();
+        _client = client;
+        Id = id;
+    }
 
-        static string BASE_API_URL = "https://api.flutterwave.com/v3/bills";
-        static string SEC_KEY = "FLWSECK-42ec0132e1a991d923c67f91a3901f70-X";
-        static string[] PHONE_NO = {
-           "08027842381"
-         };
-        static int AMOUNT = 200;
+    private int Id { get; }
 
-        static async Task Main(string[] args)
+    public async Task<string> CustomLogger()
+    {
+        var response = await _client.GetAsync(Convert.ToString(Id));
+        var responseBody = await response.Content.ReadAsStringAsync();
+        var deserialized = JsonSerializer.Deserialize<Todo>(responseBody)!;
+        return deserialized.Completed
+            ? $"Your todo: {deserialized.Title} has been completed "
+            : $"Your todo: {deserialized.Title} is yet to be completed ";
+    }
+}
+
+
+public class CustomHandler : HttpClientHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        return Task.FromResult(new HttpResponseMessage
         {
-            foreach (var num in PHONE_NO)
-            {
-                Console.WriteLine(num);
-                Guid reference = Guid.NewGuid();
-                try
-                {
-                    var payload = new
-                    {
-
-                        country = "NG",
-                        customer = PHONE_NO,
-                        amount = AMOUNT,
-                        recurrence = "ONCE",
-                        type = "AIRTIME",
-                        reference = reference
-                    };
-
-
-                    string serializedPayload = JsonSerializer.Serialize(payload);
-                    HttpContent content = new StringContent(serializedPayload);
-                    content.Headers.ContentType.MediaType = "application/json";
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", SEC_KEY);
-                    HttpResponseMessage response = await client.PostAsync(BASE_API_URL, content);
-                    response.EnsureSuccessStatusCode();
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine(responseBody);
-                }
-                catch (HttpRequestException e)
-                {
-                    Console.WriteLine("\nException Caught!");
-                    Console.WriteLine("Message :{0} ", e.Message);
-                }
-
-            }
-        }
-
+            Content = new StringContent(
+                "{ 'userId': 1,  'id': 38,  'title': 'fugiat veniam minus',   'completed': false }")
+        });
     }
 }
