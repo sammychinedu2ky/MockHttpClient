@@ -7,9 +7,14 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 using Moq.Protected;
 
-//using Program;
-
+//using Program
 namespace Tests;
+
+internal interface IHttpClientHandlerProtectedMember
+{
+    Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+        CancellationToken cancellationToken);
+}
 
 [TestClass]
 public class TodoCustomLoggerTests
@@ -32,9 +37,19 @@ public class TodoCustomLoggerTests
         {
             Content = new StringContent(JsonSerializer.Serialize(todo))
         };
+
         var moq = new Mock<HttpClientHandler>();
-        moq.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(),
+
+        {
+        }
+        moq.Protected().As<IHttpClientHandlerProtectedMember>().Setup(m =>
+            m.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>())).ReturnsAsync(responseMessage);
+        /* or you can replace the code up with this
+         
+         moq.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(),
             ItExpr.IsAny<CancellationToken>()).ReturnsAsync(responseMessage);
+         */
+
         var handler = moq.Object;
         var client = new HttpClient(handler);
         client.BaseAddress = new Uri(baseUri);
