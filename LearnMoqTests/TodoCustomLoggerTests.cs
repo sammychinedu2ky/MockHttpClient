@@ -44,10 +44,12 @@ public class TodoCustomLoggerTests
         }
         moq.Protected().As<IHttpClientHandlerProtectedMember>().Setup(m =>
             m.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>())).ReturnsAsync(responseMessage);
-        /* or you can replace the code up with this
+        
+        /* or you can replace the code above with this
          
          moq.Protected().Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(),
             ItExpr.IsAny<CancellationToken>()).ReturnsAsync(responseMessage);
+         
          */
 
         var handler = moq.Object;
