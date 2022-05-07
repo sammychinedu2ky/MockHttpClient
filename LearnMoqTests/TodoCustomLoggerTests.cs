@@ -40,8 +40,6 @@ public class TodoCustomLoggerTests
 
         var moq = new Mock<HttpClientHandler>();
 
-        {
-        }
         moq.Protected().As<IHttpClientHandlerProtectedMember>().Setup(m =>
             m.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>())).ReturnsAsync(responseMessage);
         
